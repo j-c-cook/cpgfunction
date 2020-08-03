@@ -105,15 +105,18 @@ namespace gt::gfunction {
         // ------ time vectors ---------
         start = std::chrono::steady_clock::now();
         // create new time vector that starts at 0
+        std::vector<double> _time_untouched(time.size()+1);
         std::vector<double> _time(time.size()+1);
         std::vector<double> dt(time.size());
 
-        auto _fill_time = [&_time, &time, &dt]() {
+        auto _fill_time = [&_time, &time, &dt, &_time_untouched]() {
             for (int i=0; i<_time.size(); i++) {
                 if (i==0) {
+                    _time_untouched[0] = 0;
                     _time[0] = 0;
                     dt[i] = time[i];
                 } else {
+                    _time_untouched[i] = time[i-1];
                     _time[i] = time[i-1];
                     dt[i] = time[i] - time[i-1];
                 } // fi
@@ -164,28 +167,25 @@ namespace gt::gfunction {
 //                vector< vector<double> > (nSources, vector<double> (nt)) );
         vector< vector< vector<double> > > h_dt(nSources ,vector< vector<double> > (nSources, vector<double> (nt)) );
         // dh_ij is the difference of h_ij, ie. dh_[i][j][k] = h_ij[i][j][k]-h_ij[i][j][k-1], ie. \delta h_ij
-//        std::vector< std::vector< std::vector<double> > > dh_ij(nSources ,
-//                std::vector< std::vector<double> > (nSources, std::vector<double> (nt)) );
+        std::vector< std::vector< std::vector<double> > > dh_ij(nSources ,
+                std::vector< std::vector<double> > (nSources, std::vector<double> (nt)) );
 
         // Thermal response factors evaluated at t=dt (h_dt)
-        auto _interpolate = [&h_ij, &h_dt, &_time, &dt](const int i) {
+        auto _interpolate = [&h_ij, &h_dt, &_time, &dt, &dh_ij](const int i) {
             std::vector<double> y(_time.size());
             for (int j=0; j <h_ij[i].size(); j++) {
                 for (int k=0; k<h_ij[i][j].size(); k++) {
                     if (k==1) {
-                        ;
-//                        dh_ij[i][j][k-1] = h_ij[i][j][k];  // start at time "1"
+                        dh_ij[i][j][k-1] = h_ij[i][j][k];  // start at time "1"
                     } else if (k>1) {
-                        ;
-//                        dh_ij[i][j][k-1] = h_ij[i][j][k] - h_ij[i][j][k-1];
+                        dh_ij[i][j][k-1] = h_ij[i][j][k] - h_ij[i][j][k-1];
 
                     } // fi
                     y[k] = h_ij[i][j][k];
-
                 } // end k
 
-                std::vector<double> yp(_time.size());
-                jcc::interpolation::interp1d(dt, yp, _time, y );
+                std::vector<double> yp(dt.size());
+                jcc::interpolation::interp1d(dt, yp, _time, y, yp.size() );
 
                 for (int k=0; k<h_dt[i][j].size(); k++) {
                     h_dt[i][j][k] = yp[k];
@@ -196,8 +196,8 @@ namespace gt::gfunction {
         // h_dt for loop
         for (int i=0; i<h_ij.size(); i++) {
 //            for (int j=0; j<h_ij[i].size(); j++) {
-                boost::asio::post(pool2, [&_interpolate, i]{ _interpolate(i) ;});
-//                 _interpolate(i, j);
+//                boost::asio::post(pool2, [&_interpolate, i]{ _interpolate(i) ;});
+                 _interpolate(i);
 //            } // end j
         } // end i
 
@@ -315,8 +315,10 @@ namespace gt::gfunction {
 
             // ------------- fill A ------------
             start = std::chrono::steady_clock::now();
-            auto _fillA = [&Hb, &h_dt, &A, &A_](int i, int p, int SIZE) {
+            auto _fillA = [&Hb, &h_dt, &A, &A_, &h_ij, &dt, &_time_untouched](int i, int p, int SIZE) {
                 int n = SIZE - 1;
+                vector<double> yp(1);
+                vector<double> xp(1);
                 for (int j=0; j<SIZE; j++) {
                     if (i == n) { // then we are referring to Hb
                         if (j==n) {
@@ -331,6 +333,20 @@ namespace gt::gfunction {
                             A_[i+j*SIZE] = -1;
 //                            A[i][j] = -1;
                         } else {
+                            if (i==7 && j==7 &&p==4) {
+                                int a = 1;
+                            }
+                            xp[0] = dt[p];
+                            vector<double> x = _time_untouched;
+                            vector<double> y = h_ij[i][j];
+//                            cout << "i: " << i << " j: " << j << " p: " << p << endl;
+
+                            if (yp.size() > 1) {
+                                int a = 1;
+                            }
+                            jcc::interpolation::interp1d(xp, yp, _time_untouched, y );
+                            double a = h_dt[i][j][p];
+//                            A_[j+i*SIZE] = yp[0];
                             A_[j+i*SIZE] = h_dt[i][j][p];
 //                            A[j][i] = h_dt[i][j][p];
                         } // fi
@@ -340,8 +356,8 @@ namespace gt::gfunction {
             boost::asio::thread_pool pool3(processor_count);
             // A needs filled each loop because the _gsl partial pivot decomposition modifies the matrix
             for (int i=0; i<SIZE; i++) {
-                boost::asio::post(pool3, [&_fillA, i, p, SIZE]{ _fillA(i, p, SIZE) ;});
-//                _fillA(i, p, SIZE);
+//                boost::asio::post(pool3, [&_fillA, i, p, SIZE]{ _fillA(i, p, SIZE) ;});
+                _fillA(i, p, SIZE);
             }
             pool3.join();
 
@@ -358,7 +374,7 @@ namespace gt::gfunction {
 
             // ----- temporal superposition
             start = std::chrono::steady_clock::now();
-            _temporal_superposition(Tb_0, h_ij, q_reconstructed, p);
+            _temporal_superposition(Tb_0, dh_ij, h_ij, q_reconstructed, p);
             // fill b with -Tb
             for (int i=0; i<Tb_0.size(); i++) {
                 b[i] = -Tb_0[i];
@@ -529,6 +545,7 @@ namespace gt::gfunction {
     } // load_history_reconstruction
 
     void _temporal_superposition(vector<double>& Tb_0, vector<vector<vector<double> > >& h_ij,
+                                 vector<vector<vector<double> > >& dh_ij,
                                  std::vector<std::vector<double>>& q_reconstructed, int p)
             {
         const auto processor_count = thread::hardware_concurrency();
@@ -541,14 +558,15 @@ namespace gt::gfunction {
         // Number of time steps
         int nt = p + 1;
 
-        auto _borehole_wall_temp = [&h_ij, &q_reconstructed, &Tb_0](const int i, const int nSources, const int nt){
+        auto _borehole_wall_temp = [&h_ij, &q_reconstructed, &Tb_0, dh_ij](const int i, const int nSources, const int nt){
             for (int j =0; j<nSources; j++) {
                 for (int k=0; k<nt; k++) {
-                    if (k==0) {
-                        Tb_0[i] += h_ij[i][j][k+1] * q_reconstructed[j][nt-k-1] ;
-                    } else if (k>0) {
-                        Tb_0[i] += (h_ij[i][j][k+1]- h_ij[i][j][k]) * q_reconstructed[j][nt-k-1] ;
-                    }
+//                    if (k==0) {
+//                        Tb_0[i] += h_ij[i][j][k+1] * q_reconstructed[j][nt-k-1] ;
+//                    } else if (k>0) {
+//                        Tb_0[i] += (h_ij[i][j][k+1]- h_ij[i][j][k]) * q_reconstructed[j][nt-k-1] ;
+//                    }
+                    Tb_0[i] += dh_ij[i][j][k] * q_reconstructed[j][nt-k-1] ;
 
                 }
             }

@@ -13,7 +13,7 @@ using namespace std;
 namespace jcc::interpolation {
 
     double linterp(double xp, double x0, double y0, double x1, double y1);
-    double interp1d(vector<double>& xp, vector<double>& yp, vector<double>& x, vector<double>& y);
+    void interp1d(vector<double>& xp, vector<double>& yp, vector<double>& x, vector<double>& y, int ypSize=1);
 
 } // jcc::interpolation
 

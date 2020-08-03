@@ -39,6 +39,7 @@ namespace gt::gfunction {
         void load_history_reconstruction(vector<vector<double>>& q_reconstructed, vector<double>& time, vector<double>& _time,
                 vector<vector<double> >& Q, vector<double>& dt, const int p);
         void _temporal_superposition(vector<double>& Tb_0, vector<vector<vector<double> > >& h_ij,
+                                     vector<vector<vector<double> > >& dh_ij,
                 std::vector<std::vector<double>>& q_reconstructed, int p);
         void _solve_eqn(vector<double>& x, vector<vector<double>>& A, vector<double>& b);
 

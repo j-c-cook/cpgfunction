@@ -15,23 +15,25 @@ namespace jcc::interpolation {
         return yp;
     } // interp
 
-    double interp1d(vector<double>& xp, vector<double>& yp, vector<double>& x, vector<double>& y) {
+    void interp1d(vector<double>& xp, vector<double>& yp, vector<double>& x, vector<double>& y, int ypSize) {
         int counter = 0;
-        for (int i=0; i<yp.size(); i++) {
+        for (int i=0; i<ypSize; i++) {
+            if (xp[i] < x[0] || xp[i] > x[x.size()-1]) {
+                throw invalid_argument("Need to add extrapolation");
+            }
             for (int j = counter; j<y.size();j++) {
                 if (xp[i] - x[j] < 10) {
                     yp[i] = y[j];
                     break;
                 } else if (xp[i] >= x[j] && xp[i] <= x[j+1]) {
-                    yp[i] = linterp(xp[i], x[j], y[j], x[j+1], y[j+1]);
+                    yp[i] = linterp(xp[i], x[j], y[j], x[j + 1], y[j + 1]);
                     break;
-                } else if (xp[i] < x[0] || xp[i] > x[x.size()-1]) {
-                    throw invalid_argument( "Need to add extrapolation" );
                 } else {
                     counter++;
                 } // fi
             } // next j
         } // next i
+        return;
     } // interp1d
 
 } // jcc::interpolation
