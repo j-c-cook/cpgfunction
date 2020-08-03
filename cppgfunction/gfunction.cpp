@@ -173,28 +173,6 @@ namespace gt::gfunction {
                 std::vector< std::vector<double> > (nSources, std::vector<double> (nt)) );
 
         // Thermal response factors evaluated at t=dt (h_dt)
-<<<<<<< HEAD
-//        auto _interpolate = [&h_ij, &h_dt, &_time, &dt, &dh_ij](const int i) {
-//            std::vector<double> y(_time.size());
-//            for (int j=0; j <h_ij[i].size(); j++) {
-//                for (int k=0; k<h_ij[i][j].size(); k++) {
-//                    if (k==1) {
-//                        dh_ij[i][j][k-1] = h_ij[i][j][k];  // start at time "1"
-//                    } else if (k>1) {
-//                        dh_ij[i][j][k-1] = h_ij[i][j][k] - h_ij[i][j][k-1];
-//
-//                    } // fi
-//                    y[k] = h_ij[i][j][k];
-//                } // end k
-//
-//                std::vector<double> yp(dt.size());
-//                jcc::interpolation::interp1d(dt, yp, _time, y, yp.size() );
-//
-//                for (int k=0; k<h_dt[i][j].size(); k++) {
-//                    h_dt[i][j][k] = yp[k];
-//                } // end k
-//            } // next j
-=======
 //        auto _interpolate = [&h_ij, &h_dt, &_time, &dt](const int i) {
 //            std::vector<double> y(_time.size());
 //            for (int j=0; j <h_ij[i].size(); j++) {
@@ -217,7 +195,6 @@ namespace gt::gfunction {
 //                    h_dt[i][j][k] = yp[k];
 //                } // end k
 //            } // next j
->>>>>>> tmp
 
 //        }; // _interpolate
         // h_dt for loop
@@ -225,12 +202,8 @@ namespace gt::gfunction {
 //            ;
 //            for (int j=0; j<h_ij[i].size(); j++) {
 //                boost::asio::post(pool2, [&_interpolate, i]{ _interpolate(i) ;});
-<<<<<<< HEAD
-//                 _interpolate(i);
-=======
 //                 _interpolate(i, j);
 
->>>>>>> tmp
 //            } // end j
 //        } // end i
 
