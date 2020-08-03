@@ -181,6 +181,7 @@ namespace gt::gfunction {
 
                     } // fi
                     y[k] = h_ij[i][j][k];
+
                 } // end k
 
                 std::vector<double> yp(_time.size());
