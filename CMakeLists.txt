@@ -25,18 +25,19 @@ add_library(cpgfunction SHARED src/boreholes.cpp
         third_party/LinearAlgebra/src/spmv.cpp)
 
 # It depends on boost (stripped)
-include_directories(third_party/boost-1.71.0)
+find_package(Boost REQUIRED)
+target_link_libraries(cpgfunction Boost::boost)
 
 # It depends on threads
 find_package(Threads REQUIRED)
 target_link_libraries(cpgfunction ${CMAKE_THREAD_LIBS_INIT})
 
-find_package(LAPACK)
-target_link_libraries(cpgfunction ${LAPACK_LIBRARIES})
+#find_package(LAPACK)
+#target_link_libraries(cpgfunction ${LAPACK_LIBRARIES})
 
 # OpenBLAS is specified because the default (Netlib BLAS) is much slower for LU decomposition (dgesv_)
 set(BLA_VENDOR OpenBLAS)
-find_package(BLAS)
+find_package(BLAS REQUIRED)
 if (BLAS_FOUND)
     target_link_libraries(cpgfunction ${BLAS_LIBRARIES})
 else()

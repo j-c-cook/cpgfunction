@@ -70,11 +70,11 @@ namespace gt { namespace gfunction {
         // NOTE: (nt + 1), the first row will be full of zeros for later interpolation
 //        vector< vector< vector<double> > > h_ij(nSources ,
 //                vector< vector<double> > (nSources, vector<double> (nt+1, 0.0)) );
-        vector< vector< vector<double> > > h_ij(1 ,
-                                                vector< vector<double> > (1, vector<double> (1, 0.0)) );
+//        vector< vector< vector<double> > > h_ij(1 ,
+//                                                vector< vector<double> > (1, vector<double> (1, 0.0)) );
         // Calculate segment to segment thermal response factors
         auto start = std::chrono::steady_clock::now();
-        gt::heat_transfer::thermal_response_factors(SegRes,h_ij, boreSegments, time, alpha, use_similarities, display);
+        gt::heat_transfer::thermal_response_factors(SegRes, boreSegments, time, alpha, use_similarities, display);
         auto end = std::chrono::steady_clock::now();
 
         if (display) {
@@ -149,8 +149,6 @@ namespace gt { namespace gfunction {
         milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         time_vector_time += milli;
 
-        pool.join(); // starting up a new idea after this, pool will close here
-
         // ---------- segment h values -------------
         /** Starting up pool2 here **/
         // Launch the pool with n threads.
@@ -219,16 +217,23 @@ namespace gt { namespace gfunction {
         std::vector<std::vector<double>> q_reconstructed (nSources, std::vector<double> (nt));
         std::vector<double> q_r(nSources * nt, 0);
 
-        // TODO: Correct the storage of the segment response matrix
         int gauss_sum = nSources * (nSources + 1) / 2;
         std::vector<double> H_ij(gauss_sum * nt, 0);  // 1D nSources x nt
-        int idx;
-        for (int i=0; i<nt; i++) {
+        // TODO: Correct the storage of the segment response matrix
+        auto Fill_H_ij = [&gauss_sum, &H_ij, &SegRes](int i){
+            int idx;
             for (int j=0; j<gauss_sum; j++) {
                 idx = (i * gauss_sum) + j;
                 H_ij[idx] = SegRes.h_ij[j][i];
             }  // next j
+        };
+
+        for (int i=0; i<nt; i++) {
+            boost::asio::post(pool, [&Fill_H_ij, i]{Fill_H_ij(i) ;});
+//            boost::asio::post(pool3, [&_fillA, i, p, SIZE]{ _fillA(i, p, SIZE) ;});
         }  // next i
+
+        pool.join(); // starting up a new idea after this, pool will close here
 
         for (int p=0; p<nt; p++) {
             if (p==1) {
@@ -253,7 +258,7 @@ namespace gt { namespace gfunction {
 
             // ------------- fill A ------------
             start = std::chrono::steady_clock::now();
-            auto _fillA = [&Hb, &A_, &dt, &_time_untouched, &boreSegments, &h_ij, &time, &SegRes](int i, int p, int SIZE) {
+            auto _fillA = [&Hb, &A_, &dt, &_time_untouched, &boreSegments, &time, &SegRes](int i, int p, int SIZE) {
                 double xp;
                 double yp;
                 int n = SIZE - 1;
