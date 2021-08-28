@@ -143,7 +143,7 @@ namespace gt {
                     } // fi i == j
                     // verify if the current pair should be included in the previously identified similarities
                     for (int k=0; k<nDis; k++) {
-                        diff = abs(disPairs[k] - dis);
+                        diff = fabs(disPairs[k] - dis);
                         if (diff < rTol) {
                             Pairs[k].push_back(tuple<int, int> (i, j));
                             nPairs[k]++;
@@ -172,8 +172,8 @@ namespace gt {
                                             const double &D1a, const double &D1b, const double &D2a, const double &D2b,
                                             const double &tol){
                 bool similarity;
-                similarity = abs((H1a - H1b) / H1a) < tol && abs((H2a - H2b) / H2a) < tol &&
-                             abs(((D2a - D1a) - (D2b - D1b)) / (D2a - D1a + 1e-30)) < tol;
+                similarity = fabs((H1a - H1b) / H1a) < tol && fabs((H2a - H2b) / H2a) < tol &&
+                             fabs(((D2a - D1a) - (D2b - D1b)) / (D2a - D1a + 1e-30)) < tol;
                 return similarity;
             };
             // Condition for equivalence of the image part of the FLS solution
@@ -181,8 +181,8 @@ namespace gt {
                                              const double &D1a, const double &D1b, const double &D2a, const double &D2b,
                                              const double &tol) {
                 bool similarity;
-                similarity = abs((H1a - H1b) / H1a) < tol && abs((H2a - H2b) / H2a) < tol &&
-                             abs(((D2a + D1a) - (D2b + D1b)) / (D2a + D1a + 1e-30)) < tol;
+                similarity = fabs((H1a - H1b) / H1a) < tol && fabs((H2a - H2b) / H2a) < tol &&
+                             fabs(((D2a + D1a) - (D2b + D1b)) / (D2a + D1a + 1e-30)) < tol;
                 return similarity;
             };
             // Condition for equivalence of the full FLS solution
@@ -190,8 +190,8 @@ namespace gt {
                                                     const double &D1a, const double &D1b, const double &D2a, const double &D2b,
                                                     const double &tol) {
                 bool similarity;
-                similarity = abs((H1a - H1b) / H1a) < tol && abs((H2a - H2b) / H2a) < tol &&
-                             abs((D1a - D1b) / (D1a + 1e-30)) < tol && abs((D2a - D2b) / (D2a + 1e-30)) < tol;
+                similarity = fabs((H1a - H1b) / H1a) < tol && fabs((H2a - H2b) / H2a) < tol &&
+                             fabs((D1a - D1b) / (D1a + 1e-30)) < tol && fabs((D2a - D2b) / (D2a + 1e-30)) < tol;
                 return similarity;
             };
 
