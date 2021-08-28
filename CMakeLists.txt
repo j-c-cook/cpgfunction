@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 2.8)
 project(CpGFunction)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -8,9 +8,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # Everything will need to access this
 include_directories(include)
 include_directories(third_party)
-include_directories(third_party/LinearAlgebra)
-include_directories(third_party/LinearAlgebra/include)
-add_subdirectory(third_party/LinearAlgebra)
 
 # Create a DLL with an API
 add_library(cpgfunction SHARED src/boreholes.cpp
@@ -20,13 +17,11 @@ add_library(cpgfunction SHARED src/boreholes.cpp
         src/utilities.cpp
         third_party/nlohmann/json.hpp
         src/coordinates.cpp
-        src/statistics.cpp
-        third_party/LinearAlgebra/src/axpy.cpp
-        third_party/LinearAlgebra/src/spmv.cpp)
+        src/statistics.cpp)
 
 # It depends on boost (stripped)
-find_package(Boost REQUIRED)
-target_link_libraries(cpgfunction Boost::boost)
+add_subdirectory(third_party/boost-1.77.0)
+include_directories(third_party/boost-1.77.0/libs)
 
 # It depends on threads
 find_package(Threads REQUIRED)
@@ -36,12 +31,18 @@ target_link_libraries(cpgfunction ${CMAKE_THREAD_LIBS_INIT})
 #target_link_libraries(cpgfunction ${LAPACK_LIBRARIES})
 
 # OpenBLAS is specified because the default (Netlib BLAS) is much slower for LU decomposition (dgesv_)
-set(BLA_VENDOR OpenBLAS)
-find_package(BLAS REQUIRED)
-if (BLAS_FOUND)
-    target_link_libraries(cpgfunction ${BLAS_LIBRARIES})
+if (BLA_ROOT)
+    message("BLAS ROOT=${BLA_ROOT}")
+    include_directories(-DBLA_ROOT/include)
+    target_link_libraries(cpgfunction -DBLA_ROOT/lib/libopenblas.so)
 else()
-    # ERROR
+    set(BLA_VENDOR OpenBLAS)
+    find_package(BLAS REQUIRED)
+    if (BLAS_FOUND)
+        target_link_libraries(cpgfunction ${BLAS_LIBRARIES})
+    else()
+        # ERROR
+    endif()
 endif()
 
 OPTION (USE_OpenMP "Use OpenMP" ON)
