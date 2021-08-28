@@ -10,11 +10,20 @@
 #include <thread>
 #include <boost/asio.hpp>
 #include <algorithm>  // for copy
-#include <LinearAlgebra/spmv.h>
 
-#include <LinearAlgebra/blas.h>
-#include <LinearAlgebra/lapack.h>
-#include <LinearAlgebra/axpy.h>
+
+// - axpy y = a*x + y
+// double axpy (daxpy)
+extern "C" void daxpy_(int *n, double *a, double *x, int *incx, double *y,
+                       int *incy);
+// - spmv symmetric packed matrix vector multiply y = alpha*A*x + beta*y
+// double spmv (d_spmv)
+extern "C" void dspmv_(char *uplo, int *n, double *alpha, double *A, double *x,
+                       int *incx, double *beta, double *y, int *incy);
+// gesv solves for x in Ax=b
+// double gesv (d_gesv)
+extern "C" void dgesv_(int *n, int *nrhs, double *a, int *lda, int *ipiv,
+                       double *b, int *lbd, int *info);
 
 using namespace std;  // lots of vectors, only namespace to be used
 
@@ -348,7 +357,7 @@ namespace gt { namespace gfunction {
 
             // ----- LU decomposition -----
             start = std::chrono::steady_clock::now();
-            jcc::lapack::dgesv_(&n, &nrhs, &*A_.begin(), &lda, &*_ipiv.begin(),
+            dgesv_(&n, &nrhs, &*A_.begin(), &lda, &*_ipiv.begin(),
                                 &*b_.begin(), &ldb, &info);
 
             for (int i=0; i<SIZE; i++) {
@@ -521,8 +530,6 @@ namespace gt { namespace gfunction {
 
         std::vector<double>::iterator begin_it_1;
         std::vector<double>::iterator end_it_1;
-//        std::vector<double>::iterator begin_it_2;
-//        std::vector<double>::iterator end_it_2;
 
         for (int k = 0; k < nt; k++) {
             begin_1 = k * gauss_sum;
@@ -536,19 +543,17 @@ namespace gt { namespace gfunction {
                 // h_1 -> dh_ij
                 std::copy(begin_it_1, end_it_1, dh_ij.begin());
                 // dh_ij = -1 * h(k) + h(k-1)
-                jcc::blas::axpy(gauss_sum, alpha_n, h_ij, dh_ij, begin_2,
-                                n_threads);
+                daxpy_(&gauss_sum, &alpha_n, &h_ij.at(begin_2), &inc,
+                       &*dh_ij.begin(), &inc);
             }
             // q_reconstructed(t_k - t_k')
             begin_q = (nt - k - 1) * nSources;
             // dh_ij is a lower triangular packed matrix
             char uplo = 'l';
             // Tb_0 = 1 * dh_ij * q(t_k-t_k') + 1 * Tb_0
-//            jcc::blas::dspmv_(&uplo, &nSources, &alpha, &*dh_ij.begin(),
-//                              &q_reconstructed.at(begin_q), &inc, &alpha,
-//                              &*Tb_0.begin(), &inc);
-            jcc::blas::spmv(nSources, alpha, dh_ij, q_reconstructed, alpha,
-                            Tb_0, begin_q, n_threads);
+            dspmv_(&uplo, &nSources, &alpha, &*dh_ij.begin(),
+                              &q_reconstructed.at(begin_q), &inc, &alpha,
+                              &*Tb_0.begin(), &inc);
         }  // next k
     }  // _temporal_superposition();
 } } // namespace gt::gfunction
