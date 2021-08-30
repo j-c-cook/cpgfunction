@@ -7,6 +7,7 @@
 #include <thread>
 #include <cpgfunction/boreholes.h>
 #include <qdt.h>
+#include <boost/asio.hpp>
 
 namespace gt { namespace heat_transfer {
     double finite_line_source(const double time_, const double alpha, gt::boreholes::Borehole &b1,
