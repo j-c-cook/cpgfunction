@@ -20,6 +20,12 @@ add_library(cpgfunction SHARED src/boreholes.cpp
         src/coordinates.cpp
         src/statistics.cpp)
 
+find_package(Boost)
+if (Boost_FOUND)
+    target_link_libraries(cpgfunction Boost::boost)
+else()
+    #
+endif()
 # It depends on threads
 find_package(Threads REQUIRED)
 target_link_libraries(cpgfunction ${CMAKE_THREAD_LIBS_INIT})
