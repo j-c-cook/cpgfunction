@@ -8,8 +8,8 @@
 #include <chrono>
 #include <cpgfunction/interpolation.h>
 #include <thread>
-#include <boost/asio.hpp>
 #include <algorithm>  // for copy
+#include <omp.h>
 
 
 // - axpy y = a*x + y
@@ -108,21 +108,15 @@ namespace gt { namespace gfunction {
         double LU_decomposition_time = 0;
 
         auto start2 = std::chrono::steady_clock::now();
-        boost::asio::thread_pool pool(processor_count);
 
         // ------ Segment lengths -------
         start = std::chrono::steady_clock::now();
         std::vector<float> Hb(nSources);
-        auto _segmentlengths = [&boreSegments, &Hb](const int nSources) {
-            for (int b=0; b<nSources; b++) {
-                Hb[b] = boreSegments[b].H;
-            } // next b
-        }; // auto _segmentlengths
-        if (multi_thread) {
-            boost::asio::post(pool, [nSources, &boreSegments, &Hb, &_segmentlengths]{ _segmentlengths(nSources); });
-        } else {
-            _segmentlengths(nSources);
-        }  // if (multi_thread);
+        int b;
+#pragma omp parallel for default(none) shared(nSources, boreSegments, Hb) private(b)
+        for (int b=0; b<nSources; b++) {
+            Hb[b] = boreSegments[b].H;
+        } // next b
 
         end = std::chrono::steady_clock::now();
         milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -135,24 +129,19 @@ namespace gt { namespace gfunction {
         std::vector<double> _time(time.size()+1);
         std::vector<double> dt(_time_untouched.size());
 
-        auto _fill_time = [&_time, &time, &dt, &_time_untouched]() {
-            for (int i=0; i<_time.size(); i++) {
-                if (i==0) {
-                    _time[0] = 0;
-                    _time_untouched[0] = 0;
-                    dt[i] = time[i];
-                } else {
-                    _time[i] = time[i-1];
-                    _time_untouched[i] = time[i-1];
-                    dt[i] = time[i] - time[i-1];
-                } // fi
-            } // next i
-        }; // auto _fill_time
-        if (multi_thread) {
-            boost::asio::post(pool, [&_fill_time, &time, &_time]{ _fill_time() ;});
-        } else {
-            _fill_time();
-        }  // if (multi_thread);
+        int i;
+#pragma omp parallel for default(none) shared(time, _time, _time_untouched, dt) private(i)
+        for (i=0; i<_time.size(); i++) {
+            if (i == 0) {
+                _time[0] = 0;
+                _time_untouched[0] = 0;
+                dt[i] = time[i];
+            } else {
+                _time[i] = time[i - 1];
+                _time_untouched[i] = time[i - 1];
+                dt[i] = time[i] - time[i - 1];
+            } // fi
+        } // next i
 
         end = std::chrono::steady_clock::now();
         milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -162,7 +151,6 @@ namespace gt { namespace gfunction {
         /** Starting up pool2 here **/
         // Launch the pool with n threads.
         auto tic = std::chrono::steady_clock::now();
-//        boost::asio::thread_pool pool2(processor_count);
         auto toc = std::chrono::steady_clock::now();
         if (display) {
             double milli = std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count();
@@ -237,33 +225,15 @@ namespace gt { namespace gfunction {
             }  // next j
         };
 
+#pragma omp parallel for default(none) shared(nt, Fill_H_ij)
         for (int i=0; i<nt; i++) {
-            boost::asio::post(pool, [&Fill_H_ij, i]{Fill_H_ij(i) ;});
-//            boost::asio::post(pool3, [&_fillA, i, p, SIZE]{ _fillA(i, p, SIZE) ;});
+            Fill_H_ij(i);
         }  // next i
-
-        pool.join(); // starting up a new idea after this, pool will close here
 
         for (int p=0; p<nt; p++) {
             if (p==1) {
                 int a = 1;
             }
-            // current thermal response factor matrix
-//            auto _fill_h_ij_dt = [&h_dt, &A] (const int i, const int p) {
-//                int m = h_dt[0].size();
-//                for (int j=0; j<A[i].size(); j++) {
-//                    if (j==A[i].size()-1) {
-//                        A[i][j] = -1;
-//                    } else {
-//                        A[j][i] = h_dt[i][j][p];
-//                    }
-////                    h_ij_dt[j][i] = h_dt[i][j][p];
-//
-//                } // next j
-//                ;
-//            }; // _fill_h_ij_dt
-            // _fill_A
-            //        auto _fill_A = [&A, &Hb, &_A](const int i, const int SIZE) { // TODO: keep in mind this function can make use of threading
 
             // ------------- fill A ------------
             start = std::chrono::steady_clock::now();
@@ -303,16 +273,11 @@ namespace gt { namespace gfunction {
                     } // fi
                 } // next k
             };
-            boost::asio::thread_pool pool3(processor_count);
             // A needs filled each loop because the _gsl partial pivot decomposition modifies the matrix
+#pragma omp parallel for default(none) shared(_fillA, p, SIZE)
             for (int i=0; i<SIZE; i++) {
-                if (multi_thread) {
-                    boost::asio::post(pool3, [&_fillA, i, p, SIZE]{ _fillA(i, p, SIZE) ;});
-                } else {
-                    _fillA(i, p, SIZE);
-                }  // if (multi_thread);
+                _fillA(i, p, SIZE);
             }  // next i
-            pool3.join();
 
             end = std::chrono::steady_clock::now();  // _fill_A
             milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

@@ -6,7 +6,7 @@
 #define CPPGFUNCTION_BOREHOLES_H
 
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <tuple>
 #include <vector>
 

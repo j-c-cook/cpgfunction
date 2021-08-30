@@ -3,7 +3,6 @@
 //
 
 #include <cpgfunction/interpolation.h>
-#include <csignal>
 
 using namespace std;
 
