@@ -7,7 +7,6 @@
 #include <thread>
 #include <cpgfunction/boreholes.h>
 #include <qdt.h>
-#include <boost/asio.hpp>
 
 namespace gt { namespace heat_transfer {
     double finite_line_source(const double time_, const double alpha, gt::boreholes::Borehole &b1,
@@ -61,22 +60,14 @@ namespace gt { namespace heat_transfer {
         // Create a vector of threads
         //may return 0 when not able to detect
         const auto processor_count = thread::hardware_concurrency();
-        // Launch the pool with n threads.
-        boost::asio::thread_pool pool(processor_count);
         if (disp) {
             cout << "\tDetected " << processor_count << " as the number of available threads" << endl;
         }
 
-        gt:boreholes::SimilaritiesType SimReal; // positive
+        gt::boreholes::SimilaritiesType SimReal; // positive
         gt::boreholes::SimilaritiesType SimImage; // negative
 
         int COUNT=0;
-//        auto check_key = [&h_map](Key &sim_key) {
-//            // Key is not present
-//            if (h_map.find(sim_key) == h_map.end())
-//                return false;
-//            return true;
-//        }; // check_key
 
         auto sum_to_n = [](const int n) {
             return n * (n + 1) / 2;
@@ -159,23 +150,21 @@ namespace gt { namespace heat_transfer {
             // inputs
             bool reaSource;
             bool imgSource;
+            #pragma omp parallel for default(none) num_threads(processor_count) shared(SimReal, reaSource, imgSource, _calculate_h)
             for (int s=0; s<SimReal.nSim; s++) {
                 reaSource = true;
                 imgSource = false;
-                boost::asio::post(pool, [&_calculate_h, &SimReal, s, reaSource, imgSource]
-                { _calculate_h(SimReal, s, reaSource, imgSource); });
-//                _calculate_h(SimReal, s, reaSource, imgSource, hash_mode);
+                _calculate_h(SimReal, s, reaSource, imgSource);
+
             } // next s
             if (splitRealAndImage) {
                 reaSource = false;
                 imgSource = true;
+                #pragma omp parallel for default(none) num_threads(processor_count) shared(SimImage, reaSource, imgSource, _calculate_h)
                 for (int s=0; s<SimImage.nSim; s++) {
-                    boost::asio::post(pool, [&_calculate_h, &SimImage, s, reaSource, imgSource]
-                    { _calculate_h(SimImage, s, reaSource, imgSource); });
-//                    _calculate_h(SimImage, s, reaSource, imgSource, hash_mode);
+                    _calculate_h(SimImage, s, reaSource, imgSource);
                 }
             }
-            pool.join();
             auto end2 = std::chrono::steady_clock::now();
             if (disp) {
                 double milli = std::chrono::duration_cast<std::chrono::milliseconds>(end2 - end).count();
@@ -241,9 +230,6 @@ namespace gt { namespace heat_transfer {
 ////                    _fill_line(i, j, alpha, sameSegment, otherSegment);  // could call with no threading during debugging
 //                } // end for
 //            } // fi (end if)
-
-            /** Wait for all the threads in vector to join **/
-            pool.join();
             auto end = std::chrono::steady_clock::now();
             if (disp) {
                 double milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
