@@ -20,10 +20,6 @@ add_library(cpgfunction SHARED src/boreholes.cpp
         src/coordinates.cpp
         src/statistics.cpp)
 
-# It depends on boost (stripped)
-add_subdirectory(third_party/boost-1.77.0)
-include_directories(third_party/boost-1.77.0/libs)
-
 # It depends on threads
 find_package(Threads REQUIRED)
 target_link_libraries(cpgfunction ${CMAKE_THREAD_LIBS_INIT})
