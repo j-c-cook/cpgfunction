@@ -7,6 +7,7 @@
 #include <thread>
 #include <boost/asio.hpp>
 #include <cpgfunction/boreholes.h>
+#include <qdt.h>
 
 using namespace boost::math::quadrature;
 
@@ -42,9 +43,9 @@ namespace gt { namespace heat_transfer {
         // lower bound of integration
         double a = double(1.) / sqrt(double(4.) * alpha * time_);
         // Evaluate the integral using Gauss-Kronrod
-        double error;
-        double Q = gauss_kronrod<double, 15>::integrate(_Ils, a, std::numeric_limits<double>::infinity(),
-                                                        5, 1e-9, &error);
+        double Q;
+        auto method = qdt::adaptive(qdt::gauss_kronrod());
+        Q = method.integrate(_Ils, a, qdt::INF);
         return Q;
 
     } // void finite_line_source
