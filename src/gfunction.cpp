@@ -214,22 +214,6 @@ namespace gt { namespace gfunction {
         std::vector<std::vector<double>> q_reconstructed (nSources, std::vector<double> (nt));
         std::vector<double> q_r(nSources * nt, 0);
 
-        int gauss_sum = nSources * (nSources + 1) / 2;
-        std::vector<double> H_ij(gauss_sum * nt, 0);  // 1D nSources x nt
-        // TODO: Correct the storage of the segment response matrix
-        auto Fill_H_ij = [&gauss_sum, &H_ij, &SegRes](int i){
-            int idx;
-            for (int j=0; j<gauss_sum; j++) {
-                idx = (i * gauss_sum) + j;
-                H_ij[idx] = SegRes.h_ij[j][i];
-            }  // next j
-        };
-
-#pragma omp parallel for default(none) shared(nt, Fill_H_ij)
-        for (int i=0; i<nt; i++) {
-            Fill_H_ij(i);
-        }  // next i
-
         for (int p=0; p<nt; p++) {
             if (p==1) {
                 int a = 1;
@@ -294,7 +278,7 @@ namespace gt { namespace gfunction {
             start = std::chrono::steady_clock::now();
             _temporal_superposition(Tb_0,
                                     SegRes,
-                                    H_ij,
+                                    SegRes.H_ij,
                                     q_r,
                                     p,
                                     nSources);
@@ -324,20 +308,17 @@ namespace gt { namespace gfunction {
             start = std::chrono::steady_clock::now();
             dgesv_(&n, &nrhs, &*A_.begin(), &lda, &*_ipiv.begin(),
                                 &*b_.begin(), &ldb, &info);
-
-            for (int i=0; i<SIZE; i++) {
-                x[i] = b_[i];
-            } // next i
+            
             end = std::chrono::steady_clock::now();
             milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
             LU_decomposition_time += milli;
 
             // ---- Save Q's for next p ---
             for (int j=0; j<Q.size(); j++) {
-                Q[j][p] = x[j];
+                Q[j][p] = b_[j];
             } // next j
             // the borehole wall temperatures are equal for all segments
-            double Tb = x[x.size()-1];
+            double Tb = b_[b_.size()-1];
             gFunction[p] = Tb;
         } // next p
         segment_length_time /= 1000;
