@@ -21,7 +21,7 @@ jobs:
         run: git submodule init && git submodule update
 
       - name: Install Apt Dependencies
-        run: sudo apt-get install libopenblas-dev
+        run: apt-get install libopenblas-dev
 
       - name: Create Build Directory
         run: cmake -E make_directory ./build/
