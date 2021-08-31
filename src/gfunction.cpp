@@ -278,7 +278,6 @@ namespace gt { namespace gfunction {
             start = std::chrono::steady_clock::now();
             _temporal_superposition(Tb_0,
                                     SegRes,
-                                    SegRes.H_ij,
                                     q_r,
                                     p,
                                     nSources);
@@ -452,7 +451,7 @@ namespace gt { namespace gfunction {
     } // load_history_reconstruction
 
     void _temporal_superposition(vector<double>& Tb_0, gt::heat_transfer::SegmentResponse &SegRes,
-                                 vector<double> &h_ij, vector<double> &q_reconstructed,
+                                 vector<double> &q_reconstructed,
                                  const int p, int &nSources)
             {
         // This function performs equation (37) of Cimmino (2017)
@@ -476,20 +475,24 @@ namespace gt { namespace gfunction {
 
         std::vector<double>::iterator begin_it_1;
         std::vector<double>::iterator end_it_1;
+        std::vector<double>::iterator begin_it_2;
 
         for (int k = 0; k < nt; k++) {
             begin_1 = k * gauss_sum;
-            begin_it_1 = h_ij.begin() + begin_1;
-            end_it_1 = h_ij.begin() + begin_1 + gauss_sum;
+            begin_it_1 = SegRes.h_ij[k].begin();
+            end_it_1 = SegRes.h_ij[k].end();
+//            begin_it_1 = h_ij.begin() + begin_1;
+//            end_it_1 = h_ij.begin() + begin_1 + gauss_sum;
             if (k==0){
                 // dh_ij = h(k)
                 std::copy(begin_it_1, end_it_1, dh_ij.begin());
             } else {
-                begin_2 = (k-1) * gauss_sum;
+//                begin_2 = (k-1) * gauss_sum;
+                begin_it_2 = SegRes.h_ij[k-1].begin();
                 // h_1 -> dh_ij
                 std::copy(begin_it_1, end_it_1, dh_ij.begin());
                 // dh_ij = -1 * h(k) + h(k-1)
-                daxpy_(&gauss_sum, &alpha_n, &h_ij.at(begin_2), &inc,
+                daxpy_(&gauss_sum, &alpha_n, &*begin_it_2, &inc,
                        &*dh_ij.begin(), &inc);
             }
             // q_reconstructed(t_k - t_k')

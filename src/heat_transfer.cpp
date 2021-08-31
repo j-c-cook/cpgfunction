@@ -125,12 +125,13 @@ namespace gt { namespace heat_transfer {
                                 if (i <= j) {
                                     // we want to store n2, n1
                                     SegRes.get_index_value(index, i, j);
-                                    SegRes.H_ij[SegRes.nSum * t + index] += b2.H / b1.H * hPos[t]; // non-critical race condition
+//                                    SegRes.H_ij[SegRes.nSum * t + index] += b2.H / b1.H * hPos[t]; // non-critical race condition
 //                                    SegRes.h_ij[index][t] += b2.H / b1.H * hPos[t]; // non-critical race condition
+                                    SegRes.h_ij[t][index] += b2.H / b1.H * hPos[t]; // non-critical race condition
                                 } else {
                                     SegRes.get_index_value(index, j, i);
-                                    SegRes.H_ij[SegRes.nSum * t + index] += hPos[t]; // non-critical race condition
-//                                    SegRes.h_ij[index][t] += hPos[t]; // non-critical race condition
+//                                    SegRes.H_ij[SegRes.nSum * t + index] += hPos[t]; // non-critical race condition
+                                    SegRes.h_ij[t][index] += hPos[t]; // non-critical race condition
                                 }  // else ()
                             }  // next t
                         }  // next k
@@ -308,11 +309,13 @@ namespace gt { namespace heat_transfer {
                 if (i <= j) {
                     get_index_value(index, i, j);
 //                    h = h_ij[index][k];
-                    h = H_ij[nSum * k + index];
+//                    h = H_ij[nSum * k + index];
+                    h = h_ij[k][index];
                 } else {
                     get_index_value(index, j, i);
 //                    h = boreSegments[j].H/boreSegments[i].H * h_ij[index][k];
-                    h = boreSegments[j].H/boreSegments[i].H * H_ij[nSum * k + index];
+//                    h = boreSegments[j].H/boreSegments[i].H * H_ij[nSum * k + index];
+                    h = boreSegments[j].H/boreSegments[i].H * h_ij[k][index];
                 }
                 break;
             default:

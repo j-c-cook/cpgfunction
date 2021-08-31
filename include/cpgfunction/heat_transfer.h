@@ -19,12 +19,11 @@ namespace gt { namespace heat_transfer {
 
         int nSources;
         int nSum;
-//        vector < vector < double > > h_ij;
-        vector<double> H_ij;
+        vector < vector < double > > h_ij;
         vector<gt::boreholes::Borehole> boreSegments;
 
         SegmentResponse(int nSources, int nSum, int nt) : nSources(nSources), boreSegments(nSources),
-        H_ij(nSum * nt, 0), nSum(nSum)
+        h_ij(nt, vector<double> (nSum, 0)), nSum(nSum)
         {} // constructor
 
         // storage_mode = 1 is the reduced segment response vector
