@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(CpGFunction)
 
+cmake_policy(SET CMP0079 NEW)
+
 set(CMAKE_CXX_STANDARD 11)
 # Compiler requests -std=c++11 be set for compiler option
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -30,8 +32,8 @@ target_link_libraries(cpgfunction ${CMAKE_THREAD_LIBS_INIT})
 # OpenBLAS is specified because the default (Netlib BLAS) is much slower for LU decomposition (dgesv_)
 if (BLA_ROOT)
     message("BLAS ROOT=${BLA_ROOT}")
-    include_directories(-DBLA_ROOT/include)
-    target_link_libraries(cpgfunction -DBLA_ROOT/lib/libopenblas.so)
+    include_directories(${BLA_ROOT}/include)
+    target_link_libraries(cpgfunction ${BLA_ROOT}/lib/libopenblas.so)
 else()
     set(BLA_VENDOR OpenBLAS)
     find_package(BLAS REQUIRED)
