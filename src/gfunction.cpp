@@ -308,7 +308,7 @@ namespace gt { namespace gfunction {
             start = std::chrono::steady_clock::now();
             dgesv_(&n, &nrhs, &*A_.begin(), &lda, &*_ipiv.begin(),
                                 &*b_.begin(), &ldb, &info);
-            
+
             end = std::chrono::steady_clock::now();
             milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
             LU_decomposition_time += milli;
