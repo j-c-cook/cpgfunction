@@ -62,19 +62,19 @@ endif()
 
 
 # Create a test binary that depends on the DLL
-add_executable(test1 test/gFunction_minimal.cpp)
-add_executable(test2 test/interpolation.cpp)
+add_executable(gFunction_minimal test/gFunction_minimal.cpp)
+add_executable(interpolation test/interpolation.cpp)
 # add_executable(test3 test/configurations.cpp)
-add_executable(test4 test/borefield_definition.cpp)
-add_executable(test5 test/time_definition.cpp)
-add_executable(test6 test/compute_UBHWT_gFunction.cpp)
+add_executable(borefield_definition test/borefield_definition.cpp)
+add_executable(time_definition test/time_definition.cpp)
+add_executable(compute_UBHWT_gFunction test/compute_UBHWT_gFunction.cpp)
 
-target_link_libraries(test1 cpgfunction)
-target_link_libraries(test2 cpgfunction)
+target_link_libraries(gFunction_minimal cpgfunction)
+target_link_libraries(interpolation cpgfunction)
 # target_link_libraries(test3 cpgfunction)
-target_link_libraries(test4 cpgfunction)
-target_link_libraries(test5 cpgfunction)
-target_link_libraries(test6 cpgfunction)
+target_link_libraries(borefield_definition cpgfunction)
+target_link_libraries(time_definition cpgfunction)
+target_link_libraries(compute_UBHWT_gFunction cpgfunction)
 
 # target_compile_definitions(cpgfunction PUBLIC TEST_RESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 # Copy validation files to build directory so tests can open
@@ -89,10 +89,10 @@ message(STATUS "The binary directory: ${CMAKE_BINARY_DIR}")
 enable_testing()
 
 # Test the test binary itself
-add_test(NAME RunTest1 COMMAND "${CMAKE_BINARY_DIR}/test1")
-add_test(NAME RunTest2 COMMAND "${CMAKE_BINARY_DIR}/test2")
+add_test(NAME RunTest1 COMMAND "${CMAKE_BINARY_DIR}/gFunction_minimal")
+add_test(NAME RunTest2 COMMAND "${CMAKE_BINARY_DIR}/interpolation")
 # add_test(NAME RunTest3 COMMAND "${CMAKE_BINARY_DIR}/test3")
-add_test(NAME RunTest4 COMMAND "${CMAKE_BINARY_DIR}/test4")
-add_test(NAME RunTest5 COMMAND "${CMAKE_BINARY_DIR}/test5")
+add_test(NAME RunTest4 COMMAND "${CMAKE_BINARY_DIR}/borefield_definition")
+add_test(NAME RunTest5 COMMAND "${CMAKE_BINARY_DIR}/time_definition")
 # Pass variable path into test 6 for json files
-add_test(NAME RunTest6 COMMAND ${CMAKE_BINARY_DIR}/test6)
+add_test(NAME RunTest6 COMMAND ${CMAKE_BINARY_DIR}/compute_UBHWT_gFunction)
