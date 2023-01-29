@@ -1,4 +1,12 @@
 # cpgfunction
+
+This library builds on *nix operating systems and was used to generate a database of [g-functions for 34,231 configurations](https://shareok.org/handle/11244/336847). 
+```
+git clone github.com/j-c-cook/cpgfunction
+git submodule init
+git submodule update
+```
+
 An open source low level (C++) implementation of [Massimo Cimmino][1]'s
 g-function methodology. The g-function calculation has to do with the distribution
 of heat in a ground heat exchanger (GHE). The g-function, after computed,
@@ -77,3 +85,5 @@ Montreal an Canada, has built on the work of Eskilson, Claesson
 and others. Cimmino has developed a methodology for g-function calculations,
 written programs to compute the g-function and then made the program open source.
 The openness of Cimmino's g-function calculation is monumental.
+
+This work was supported by Oklahoma State University by the OG&E Energy Technology Chair. 
