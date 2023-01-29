@@ -35,7 +35,7 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 # If the boost installation already on your computer is garbage or if you don't have one, uncomment this and
 # manually set the path to BOOST_ROOT (https://stackoverflow.com/a/58447515/11637415)
 # set(BOOST_ROOT /path/to/boost)
-find_package(Boost 1.74.0 REQUIRED)  # needs a minimum of 1.74.0 for Gaussian Quadrature integration of FLS
+find_package(Boost 1.71.0 REQUIRED)  # needs a minimum of 1.71.0 for Gaussian Quadrature integration of FLS
 message(STATUS "Boost_FOUND=${Boost_FOUND}")
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
