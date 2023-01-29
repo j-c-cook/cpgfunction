@@ -87,4 +87,4 @@ and others. Cimmino has developed a methodology for g-function calculations,
 written programs to compute the g-function and then made the program open source.
 The openness of Cimmino's g-function calculation is monumental.
 
-This work was supported by Oklahoma State University by the OG&E Energy Technology Chair. 
+This work was supported at Oklahoma State University by the OG&E Energy Technology Chair. 
