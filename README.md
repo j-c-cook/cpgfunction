@@ -3,6 +3,7 @@
 This library builds on *nix operating systems and was used to generate a database of [g-functions for 34,231 configurations](https://shareok.org/handle/11244/336847). 
 ```
 git clone github.com/j-c-cook/cpgfunction
+cd cpgfunction
 git submodule init
 git submodule update
 ```
