@@ -35,7 +35,7 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 # If the boost installation already on your computer is garbage or if you don't have one, uncomment this and
 # manually set the path to BOOST_ROOT (https://stackoverflow.com/a/58447515/11637415)
 # set(BOOST_ROOT /path/to/boost)
-find_package(Boost 1.71.0)  # needs a minimum of 1.74.0 for Gaussian Quadrature integration of FLS
+find_package(Boost 1.74.0 REQUIRED)  # needs a minimum of 1.74.0 for Gaussian Quadrature integration of FLS
 message(STATUS "Boost_FOUND=${Boost_FOUND}")
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
@@ -53,7 +53,7 @@ target_link_libraries(cpgfunction ${LAPACK_LIBRARIES})
 
 # OpenBLAS is specified because the default (Netlib BLAS) is much slower for LU decomposition (dgesv_)
 set(BLA_VENDOR OpenBLAS)
-find_package(BLAS)
+find_package(BLAS REQUIRED)
 if (BLAS_FOUND)
     target_link_libraries(cpgfunction ${BLAS_LIBRARIES})
 else()
